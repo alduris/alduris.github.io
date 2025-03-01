@@ -179,24 +179,24 @@
 			const datarep = {type:"base", ret:"any", inner:null};
 			var activeSlot = null;
 			
-			document.getElementById("floater").addEventListener("mouseleave", (e) => {
-				document.getElementById("floater").classList.remove("active");
-				document.getElementById("floater").removeAttribute("data-type");
+			document.getElementById("leter").addEventListener("mouseleave", (e) => {
+				document.getElementById("leter").classList.remove("active");
+				document.getElementById("leter").removeAttribute("data-type");
 			});
 			
 			function containerHandler(self, ref, set) {
 				if (self.children.length == 0) {
-					const floater = document.getElementById("floater");
-					floater.classList.remove("active");
-					floater.removeAttribute("data-type");
+					const leter = document.getElementById("leter");
+					leter.classList.remove("active");
+					leter.removeAttribute("data-type");
 					const forceType = self.getAttribute("data-force");
 					if (forceType != null) {
-						floater.setAttribute("data-type", forceType);
+						leter.setAttribute("data-type", forceType);
 					}
 					const b = self.getBoundingClientRect();
-					floater.style.top = Math.round(b.top + b.height) + "px";
-					floater.style.left = Math.round(b.left) + "px";
-					floater.classList.add("active");
+					leter.style.top = Math.round(b.top + b.height) + "px";
+					leter.style.left = Math.round(b.left) + "px";
+					leter.classList.add("active");
 					
 					activeSlot = [self, ref, set];
 				}
@@ -231,7 +231,7 @@
 				return el;
 			}
 			
-			for (const el of document.getElementById("floater").querySelectorAll(".block[data-type]")) {
+			for (const el of document.getElementById("leter").querySelectorAll(".block[data-type]")) {
 				el.addEventListener("click", (e) => {
 					if (activeSlot != null && activeSlot[0].children.length == 0) {
 						let result = null, block = null;
@@ -468,8 +468,8 @@
 					}
 					
 					activeSlot = null;
-					document.getElementById("floater").classList.remove("active");
-					document.getElementById("floater").removeAttribute("data-type");
+					document.getElementById("leter").classList.remove("active");
+					document.getElementById("leter").removeAttribute("data-type");
 				});
 			}
 			
@@ -488,6 +488,9 @@
 			function clamp(x, a, b) {
 				if (isNaN(x)) return a;
 				return x < a ? a : (x > b ? b : x);
+			}
+			function clampcol(x, a, b) {
+				return [clamp(x[0], a, b), clamp(x[1], a, b), clamp(x[2], a, b)];
 			}
 			
 			function randdev(k, l) {
@@ -516,12 +519,56 @@
 				return v - Math.floor(v);
 			}
 			
-			function hsl2rgb([h, s, l]) {
-				h *= 360;
-				// https://stackoverflow.com/a/64090995
-				let a = s * Math.min(l,1-l);
-				let f = (n,k=(n+h/30)%12) => l - a*Math.max(Math.min(k-3,9-k,1),-1);
-				return [f(0), f(8), f(4)];
+			function hsl2rgb([h, sl, l]) {
+				// from in-game code so as to simulate its buggy implementation
+				let r = l;
+				let g = l;
+				let b = l;
+				let v = ((l <= 0.5) ? (l * (1 + sl)) : (l + sl - l * sl));
+				if (v > 0)
+				{
+					let i = l + l - v;
+					let sv = (v - i) / v;
+					h *= 6;
+					let sextant = Math.floor(h);
+					let fract = h - sextant;
+					let vsf = v * sv * fract;
+					let mid1 = i + vsf;
+					let mid2 = v - vsf;
+					switch (sextant) {
+						case 0:
+							r = v;
+							g = mid1;
+							b = i;
+							break;
+						case 1:
+							r = mid2;
+							g = v;
+							b = i;
+							break;
+						case 2:
+							r = i;
+							g = v;
+							b = mid1;
+							break;
+						case 3:
+							r = i;
+							g = mid2;
+							b = v;
+							break;
+						case 4:
+							r = mid1;
+							g = i;
+							b = v;
+							break;
+						case 5:
+							r = v;
+							g = i;
+							b = mid2;
+							break;
+					}
+				}
+				return [r, g, b];
 			}
 			function rgb2hsl([r,g,b]) {
 				// https://stackoverflow.com/a/54071699
@@ -636,7 +683,7 @@
 						let g = process(item.g, x, y);
 						let b = process(item.b, x, y);
 						if (r.type == "number" && g.type == "number" && b.type == "number") {
-							return {type:"rgb", value:[r.value, g.value, b.value]};
+							return {type:"rgb", value:clampcol([r.value, g.value, b.value], 0, 1)};
 						}
 						throw "rgb can only operate with numbers!";
 					}
@@ -646,7 +693,7 @@
 						let g = process(item.s, x, y);
 						let b = process(item.l, x, y);
 						if (r.type == "number" && g.type == "number" && b.type == "number") {
-							return {type:"hsl", value:[r.value, g.value, b.value]};
+							return {type:"hsl", value:clampcol([r.value, g.value, b.value], 0, 1)};
 						}
 						throw "hsl can only operate with numbers!";
 					}
@@ -690,7 +737,13 @@
 						if (t.type != "number") throw "t must be a number in lerp!";
 						if (a.type != b.type) throw "a and b types must match in lerp!";
 						if (a.type == "number") return {type:"number", value:lerp(a.value, b.value, t.value)};
-						else if (a.type == "rgb" || a.type == "hsl") return {type:a.type, value:lerpcol(a.value, b.value, t.value)};
+						else if (a.type == "rgb") {
+							return {type:a.type, value:lerpcol(a.value, b.value, t.value)};
+						} else if (a.type == "hsl") {
+							let val = {type:a.type, value:lerpcol(a.value, b.value, t.value)};
+							val = clamp(val - Math.floor(val), 0, 1);
+							return val;
+						}
 						else throw "Invalid type passed into lerp!";
 					}
 					case "func-invlerp": {
