@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Color Range Maker</title>
+		<link rel="stylesheet" type="text/css" href="main.css">
+		<style>
+			input[type=number] {
+				width: 8ch;
+			}
+			#floater {
+				border: 1px solid currentColor;
+				border-radius: 4px;
+				background-color: var(--gray1);
+				position: absolute;
+				display: none;
+				padding: 4px;
+				gap: 2em;
+				grid-template-columns: auto auto;
+				user-select: none;
+			}
+			#floater.active {
+				display: inline-grid;
+			}
+			#floater .block {
+				cursor: pointer;
+				margin-block: 0.25em;
+			}
+			
+			.container {
+				background-color: #e9e9e9;
+				border-radius: 1000px;
+				display: inline-block;
+			}
+			.container:not(:empty) {
+				display: contents;
+			}
+			.container:empty {
+				padding: 0.5em;
+				cursor: pointer;
+				border: 1px solid currentColor;
+				position: relative;
+			}
+			.container:empty::before {
+				content: "+";
+				position: absolute;
+				width: 0;
+				height: 0;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+			}
+			
+			.block {
+				color: black;
+				border-radius: 1000px;
+				padding: 2px 6px;
+				border: 1px solid black;
+				display: inline-flex;
+				gap: 1ch;
+				align-items: center;
+				cursor: default;
+			}
+			.block[data-type='var'] {
+				background-color: #ff7f00;
+			}
+			.block[data-type='op'] {
+				background-color: #7fff00;
+			}
+			.block[data-type='type'] {
+				background-color: #007fff;
+			}
+			.block[data-type='func'] {
+				background-color: #ff007f;
+			}
+			.block[data-type='inp'] {
+				background-color: white;
+				padding: 2px 3px;
+				cursor: text;
+			}
+			
+			.del {
+				background-color: red;
+				color: white;
+				cursor: pointer;
+				border: 1px solid black;
+				border-radius: 50%;
+			}
+			
+			#floater[data-type='var']  p[data-type]:not([data-type='var']),  #floater > div:not(div:has(p[data-type]:not([data-type='var']))),
+			#floater[data-type='op']   p[data-type]:not([data-type='op']),   #floater > div:not(div:has(p[data-type]:not([data-type='op']))),
+			#floater[data-type='type'] p[data-type]:not([data-type='type']), #floater > div:not(div:has(p[data-type]:not([data-type='type']))),
+			#floater[data-type='func'] p[data-type]:not([data-type='func']), #floater > div:not(div:has(p[data-type]:not([data-type='func']))),
+			#floater[data-type='inp']  p[data-type]:not([data-type='inp']),  #floater > div:not(div:has(p[data-type]:not([data-type='inp']))) {
+				display:none;
+			}
+			#floater[data-type='var'], #floater[data-type='op'], #floater[data-type='type'], #floater[data-type='func'], #floater[data-type='inp'] {
+				grid-template-columns: auto;
+				gap: 0;
+			}
+			
+			#error {
+				font-style: italic;
+			}
+			#error:empty {
+				display: none;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Color Range Maker</h1>
+		<p>For making color range bits for the <a href="https://rainworldmods.miraheze.org/" target="_blank">Rain World Mods Wiki</a> or others. Click on <span class="container"></span> symbols to input a new block. Remember that numbers must be kept between 0 and 1.</p>
+		<hr>
+		<h3>Input</h3>
+		<form id="generate">
+			<p><label>Width: <input type="number" min="1" max="4096" value="500" id="width"></label></p>
+			<p><label>Height: <input type="number" min="1" max="4096" value="500" id="height"></label></p>
+			<p style="overflow-x: auto; white-space: nowrap;">Code: <span class="container" id="base"></span></p>
+			<p><input type="submit" value="Generate"></p>
+		</form>
+		<h3>Output</h3>
+		<p id="error"></p>
+		<p><canvas></canvas></p>
+		<form id="download">
+			<p><label>Name: <input type="text" id="name" value="palette" pattern="[\w\d\-]+" title="Alphanumeric characters, underscores, and hyphens only">.png</label> <input type="submit" value="Download Image"></p>
+		</form>
+		<div id="floater">
+			<div>
+				<p data-type="inp">
+					Input:<br>
+					<span class="block" data-type="inp" data-pick="inp">input <input type="number" value="0.5" step="any" disabled></span>
+				</p>
+				<p data-type="var">
+					Variables:<br>
+					<span class="block" data-type="var" data-pick="var-x"><b>x</b></span><br>
+					<span class="block" data-type="var" data-pick="var-y"><b>y</b></span>
+				</p>
+				<p data-type="op">
+					Operations:<br>
+					<span class="block" data-type="op" data-pick="op-plus" ><span class="container"></span> + <span class="container"></span></span><br>
+					<span class="block" data-type="op" data-pick="op-minus"><span class="container"></span> - <span class="container"></span></span><br>
+					<span class="block" data-type="op" data-pick="op-times"><span class="container"></span> * <span class="container"></span></span><br>
+					<span class="block" data-type="op" data-pick="op-div"  ><span class="container"></span> / <span class="container"></span></span><br>
+					<span class="block" data-type="op" data-pick="op-mod"  ><span class="container"></span> % <span class="container"></span></span><br>
+					<span class="block" data-type="op" data-pick="op-pow"  ><span class="container"></span> ^ <span class="container"></span></span>
+				</p>
+			</div>
+			<div>
+				<p data-type="type">
+					Color Types:<br>
+					<span class="block" data-type="type" data-pick="type-rgb"><b>rgb</b> <span class="container"></span> <span class="container"></span> <span class="container"></span></span><br>
+					<span class="block" data-type="type" data-pick="type-hsl"><b>hsl</b> <span class="container"></span> <span class="container"></span> <span class="container"></span></span><br>
+					
+					<span class="block" data-type="type" data-pick="type-torgb"><b>to rgb</b> <span class="container"></span></span><br>
+					<span class="block" data-type="type" data-pick="type-tohsl"><b>to hsl</b> <span class="container"></span></span>
+				</p>
+				<p data-type="func">
+					Functions:<br>
+					<span class="block" data-type="func" data-pick="func-clamp01"><b>clamp01</b> <span class="container"></span></span><br>
+					
+					<span class="block" data-type="func" data-pick="func-lerp"   ><b>lerp</b> a: <span class="container"></span> b: <span class="container"></span> t: <span class="container"></span></span><br>
+					<span class="block" data-type="func" data-pick="func-invlerp"><b>invlerp</b> a: <span class="container"></span> b: <span class="container"></span> t: <span class="container"></span></span><br>
+					<span class="block" data-type="func" data-pick="func-lerpmap"><b>lerpmap</b> val: <span class="container"></span> from a: <span class="container"></span> to a: <span class="container"></span> from b: <span class="container"></span> to b: <span class="container"></span></span><br>
+					
+					<span class="block" data-type="func" data-pick="func-clamprand"><b>clamped random var</b> base: <span class="container"></span> dev: <span class="container"></span> k: <span class="container"></span> axis: <span class="container"></span></span><br>
+					<span class="block" data-type="func" data-pick="func-wraprand"><b>wrapped random var</b> base: <span class="container"></span> dev: <span class="container"></span> k: <span class="container"></span> axis: <span class="container"></span></span><br>
+				</p>
+			</div>
+		</div>
+		<script>
+			const canv = document.querySelector("canvas");
+			const ctx = canv.getContext("2d", {willReadFrequently: true});
+			const datarep = {type:"base", ret:"any", inner:null};
+			var activeSlot = null;
+			
+			document.getElementById("floater").addEventListener("mouseleave", (e) => {
+				document.getElementById("floater").classList.remove("active");
+				document.getElementById("floater").removeAttribute("data-type");
+			});
+			
+			function containerHandler(self, ref, set) {
+				if (self.children.length == 0) {
+					const floater = document.getElementById("floater");
+					floater.classList.remove("active");
+					floater.removeAttribute("data-type");
+					const forceType = self.getAttribute("data-force");
+					if (forceType != null) {
+						floater.setAttribute("data-type", forceType);
+					}
+					const b = self.getBoundingClientRect();
+					floater.style.top = Math.round(b.top + b.height) + "px";
+					floater.style.left = Math.round(b.left) + "px";
+					floater.classList.add("active");
+					
+					activeSlot = [self, ref, set];
+				}
+			}
+			document.getElementById("base").addEventListener("click", (e) => {
+				e.preventDefault();
+				containerHandler(document.getElementById("base"), datarep, "inner");
+			});
+			
+			function makeContainer(ref, set) {
+				const el = document.createElement("span");
+				el.classList.add("container");
+				el.addEventListener("click", (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					containerHandler(el, ref, set);
+				});
+				return el;
+			}
+			
+			function makeDelete(block) {
+				let slot = activeSlot;
+				const el = document.createElement("button");
+				el.innerText = "\xd7";
+				el.classList.add("del");
+				el.addEventListener("click", (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					block.remove();
+					slot[1][slot[2]] = null;
+				});
+				return el;
+			}
+			
+			for (const el of document.getElementById("floater").querySelectorAll(".block[data-type]")) {
+				el.addEventListener("click", (e) => {
+					if (activeSlot != null && activeSlot[0].children.length == 0) {
+						let result = null, block = null;
+						
+						switch (el.getAttribute("data-pick")) {
+							case "inp": {
+								result = {value:0.5};
+								let inp = document.createElement("input");
+								inp.type = "number";
+								inp.step = "any";
+								inp.value = 0.5;
+								inp.addEventListener("change", (ev) => {
+									result.value = Number(inp.value);
+								});
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "inp");
+								block.appendChild(document.createTextNode("input"));
+								block.appendChild(inp);
+								break;
+							}
+							case "var-x":
+								result = {};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "var");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("x"));
+								break;
+							case "var-y":
+								result = {};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "var");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("y"));
+								break;
+							case "op-plus":
+								result = {a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "op");
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createTextNode("+"));
+								block.appendChild(makeContainer(result, "b"));
+								break;
+							case "op-minus":
+								result = {a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "op");
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createTextNode("-"));
+								block.appendChild(makeContainer(result, "b"));
+								break;
+							case "op-times":
+								result = {a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "op");
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createTextNode("*"));
+								block.appendChild(makeContainer(result, "b"));
+								break;
+							case "op-div":
+								result = {a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "op");
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createTextNode("/"));
+								block.appendChild(makeContainer(result, "b"));
+								break;
+							case "op-mod":
+								result = {a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "op");
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createTextNode("%"));
+								block.appendChild(makeContainer(result, "b"));
+								break;
+							case "op-pow":
+								result = {a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "op");
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createTextNode("^"));
+								block.appendChild(makeContainer(result, "b"));
+								break;
+							case "type-rgb":
+								result = {r: null, g: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "type");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("rgb"));
+								block.appendChild(makeContainer(result, "r"));
+								block.appendChild(makeContainer(result, "g"));
+								block.appendChild(makeContainer(result, "b"));
+								break;
+							case "type-hsl":
+								result = {h: null, s: null, l: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "type");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("hsl"));
+								block.appendChild(makeContainer(result, "h"));
+								block.appendChild(makeContainer(result, "s"));
+								block.appendChild(makeContainer(result, "l"));
+								break;
+							case "type-torgb":
+								result = {c: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "type");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("to rgb"));
+								block.appendChild(makeContainer(result, "c"));
+								break;
+							case "type-tohsl":
+								result = {c: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "type");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("to hsl"));
+								block.appendChild(makeContainer(result, "c"));
+								break;
+							case "func-clamp01":
+								result = {a: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "func");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("clamp01"));
+								block.appendChild(makeContainer(result, "a"));
+								break;
+							case "func-lerp":
+								result = {a: null, b: null, t: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "func");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("lerp"));
+								block.appendChild(document.createTextNode("a:"));
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createTextNode("b:"));
+								block.appendChild(makeContainer(result, "b"));
+								block.appendChild(document.createTextNode("t:"));
+								block.appendChild(makeContainer(result, "t"));
+								break;
+							case "func-invlerp":
+								result = {a: null, b: null, t: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "func");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("invlerp"));
+								block.appendChild(document.createTextNode("a:"));
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createTextNode("b:"));
+								block.appendChild(makeContainer(result, "b"));
+								block.appendChild(document.createTextNode("t:"));
+								block.appendChild(makeContainer(result, "t"));
+								break;
+							case "func-lerpmap":
+								result = {val: null, fa: null, ta: null, fb: null, tb: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "func");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("lerpmap"));
+								block.appendChild(document.createTextNode("val:"));
+								block.appendChild(makeContainer(result, "val"));
+								block.appendChild(document.createTextNode("from a:"));
+								block.appendChild(makeContainer(result, "fa"));
+								block.appendChild(document.createTextNode("to a:"));
+								block.appendChild(makeContainer(result, "ta"));
+								block.appendChild(document.createTextNode("from b:"));
+								block.appendChild(makeContainer(result, "fb"));
+								block.appendChild(document.createTextNode("to b:"));
+								block.appendChild(makeContainer(result, "tb"));
+								break;
+							case "func-clamprand":
+								result = {b: null, d: null, k: null, v: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "func");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("clamped random var"));
+								block.appendChild(document.createTextNode("base:"));
+								block.appendChild(makeContainer(result, "b"));
+								block.appendChild(document.createTextNode("dev:"));
+								block.appendChild(makeContainer(result, "d"));
+								block.appendChild(document.createTextNode("k:"));
+								block.appendChild(makeContainer(result, "k"));
+								block.appendChild(document.createTextNode("var:"));
+								block.appendChild(makeContainer(result, "v")).setAttribute("data-force", "var");
+								break;
+							case "func-wraprand":
+								result = {b: null, d: null, k: null, v: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "func");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("wrapped random var"));
+								block.appendChild(document.createTextNode("base:"));
+								block.appendChild(makeContainer(result, "b"));
+								block.appendChild(document.createTextNode("dev:"));
+								block.appendChild(makeContainer(result, "d"));
+								block.appendChild(document.createTextNode("k:"));
+								block.appendChild(makeContainer(result, "k"));
+								block.appendChild(document.createTextNode("var:"));
+								block.appendChild(makeContainer(result, "v")).setAttribute("data-force", "var");
+								break;
+						}
+						
+						if (result != null && block != null) {
+							result.type = el.getAttribute("data-pick");
+							activeSlot[0].appendChild(block);
+							activeSlot[1][activeSlot[2]] = result;
+							block.insertAdjacentElement("afterbegin", makeDelete(block));
+						}
+					}
+					
+					activeSlot = null;
+					document.getElementById("floater").classList.remove("active");
+					document.getElementById("floater").removeAttribute("data-type");
+				});
+			}
+			
+			function lerp(x, y, a) {
+				a = clamp(a,0,1);
+				return x * (1-a) + y*a;
+			}
+			function lerpcol(x, y, a) {
+				a = clamp(a,0,1);
+				return [lerp(x[0], y[0], a), lerp(x[1], y[1], a), lerp(x[2], y[2], a)];
+			}
+			function invlerp(x, y, a) {
+				if (x == y) return 0;
+				return clamp((a-x) / (y-x),0,1);
+			}
+			function clamp(x, a, b) {
+				if (isNaN(x)) return a;
+				return x < a ? a : (x > b ? b : x);
+			}
+			
+			function randdev(k, l) {
+				let m = (l < 0.5 ? -1 : 1);
+				l = (l < 0.5 ? 0.5 - l : l - 0.5);
+				
+				let s = l * 2 - 1;
+				if (s < 0) {
+					s = Math.abs(1 + s);
+					s = k * s / (k - s + 1) * 0.5;
+				} else {
+					s = -1 - s;
+					s = 0.5 + k * s / (k - s + 1) * 0.5;
+				}
+				
+				return s * 2 * m;
+			}
+			function clampedrandvar(b, d, k, l) {
+				let v = b + d * randdev(k, l);
+				if (v > 1) v = 1;
+				else if (v < 0) v = 0;
+				return v;
+			}
+			function wrappedrandvar(b, d, k, l) {
+				let v = b + d * randdev(k, l) + 1;
+				return v - Math.floor(v);
+			}
+			
+			function hsl2rgb([h, s, l]) {
+				h *= 360;
+				// https://stackoverflow.com/a/64090995
+				let a = s * Math.min(l,1-l);
+				let f = (n,k=(n+h/30)%12) => l - a*Math.max(Math.min(k-3,9-k,1),-1);
+				return [f(0), f(8), f(4)];
+			}
+			function rgb2hsl([r,g,b]) {
+				// https://stackoverflow.com/a/54071699
+				let v=Math.max(r,g,b), c=v-Math.min(r,g,b), f=(1-Math.abs(v+v-c-1)); 
+				let h= c && ((v==r) ? (g-b)/c : ((v==g) ? 2+(b-r)/c : 4+(r-g)/c)); 
+				return [(h<0?h+6:h)/6, f ? c/f : 0, (v+v-c)/2];
+			}
+			function rgb([r,g,b]) {
+				return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+			}
+			function tohex([r,g,b]) {
+				r = clamp(Math.round(r),0,255).toString(16).padStart(2, "0");
+				g = clamp(Math.round(g),0,255).toString(16).padStart(2, "0");
+				b = clamp(Math.round(b),0,255).toString(16).padStart(2, "0");
+				return "#" + r + g + b;
+			}
+			
+			function process(item, x, y) {
+				if (item == null) {
+					return {type:"none"};
+				}
+				switch (item.type) {
+					case "base":
+						return process(item.inner, x, y);
+					case "inp":
+						if (isNaN(item.value)) throw "Input was not a number!";
+						if (!isFinite(item.value)) throw "Input was not finite!";
+						return {type:"number", value:item.value};
+					case "var-x":
+						return {type:"number", value:x};
+					case "var-y":
+						return {type:"number", value:y};
+					case "op-plus": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						if (a.type != b.type) {
+							throw "Type mismatch in addition!";
+						} else if (a.type == "number") {
+							return {type:"number", value:a.value+b.value};
+						} else if (a.type == "rgb" || a.type == "hsl") {
+							return {type:a.type, value:[a.value[0]+b.value[0], a.value[1]+b.value[1], a.value[2]+b.value[2]]};
+						} else {
+							throw "Invalid type passed into addition!";
+						}
+					}
+					case "op-minus": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						if (a.type != b.type) {
+							throw "Type mismatch in subtraction!";
+						} else if (a.type == "number") {
+							return {type:"number", value:a.value-b.value};
+						} else if (a.type == "rgb" || a.type == "hsl") {
+							return {type:a.type, value:[a.value[0]-b.value[0], a.value[1]-b.value[1], a.value[2]-b.value[2]]};
+						} else {
+							throw "Invalid type passed into subtraction!";
+						}
+					}
+					case "op-times": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						if (a.type == "number" && (b.type == "rgb" || b.type == "hsl")) {
+							return {type:b.type, value:[b.value[0] * a.value, b.value[1] * a.value, b.value[2] * a.value]};
+						} else if (b.type == "number" && (a.type == "rgb" || a.type == "hsl")) {
+							return {type:a.type, value:[a.value[0] * b.value, a.value[1] * b.value, a.value[2] * b.value]};
+						} else if (a.type != b.type) {
+							throw "Invalid types passed into multiplication!";
+						} else if (a.type == "number") {
+							return {type:"number", value:a.value*b.value};
+						} else if (a.type == "rgb" || a.type == "hsl") {
+							return {type:a.type, value:[a.value[0]*b.value[0], a.value[1]*b.value[1], a.value[2]*b.value[2]]};
+						} else {
+							throw "Invalid types passed into multiplication!";
+						}
+					}
+					case "op-div": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						if (a.type == "number" && (b.type == "rgb" || b.type == "hsl")) {
+							return {type:b.type, value:[b.value[0] / a.value, b.value[1] / a.value, b.value[2] / a.value]};
+						} else if (b.type == "number" && (a.type == "rgb" || a.type == "hsl")) {
+							return {type:a.type, value:[a.value[0] / b.value, a.value[1] / b.value, a.value[2] / b.value]};
+						} else if (a.type != b.type) {
+							throw "Invalid types passed into division!";
+						} else if (a.type == "number") {
+							return {type:"number", value:a.value/b.value};
+						} else if (a.type == "rgb" || a.type == "hsl") {
+							return {type:a.type, value:[a.value[0]/b.value[0], a.value[1]/b.value[1], a.value[2]/b.value[2]]};
+						} else {
+							throw "Invalid types passed into division!";
+						}
+					}
+					case "op-mod": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						
+						if (a.type == "number" && b.type == "number") {
+							return {type:"number", value:a.value%b.value};
+						}
+						throw "Modulo only operates on numbers!";
+					}
+					case "op-pow": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						if (a.type == "number" && b.type == "number") {
+							return {type:"number", value: Math.pow(a.value, b.value)};
+						}
+						throw "Pow only operates on numbers!";
+					}
+					case "type-rgb": {
+						let r = process(item.r, x, y);
+						let g = process(item.g, x, y);
+						let b = process(item.b, x, y);
+						if (r.type == "number" && g.type == "number" && b.type == "number") {
+							return {type:"rgb", value:[r.value, g.value, b.value]};
+						}
+						throw "rgb can only operate with numbers!";
+					}
+					case "type-hsl": {
+						// shhh I was too lazy to change the variable names
+						let r = process(item.h, x, y);
+						let g = process(item.s, x, y);
+						let b = process(item.l, x, y);
+						if (r.type == "number" && g.type == "number" && b.type == "number") {
+							return {type:"hsl", value:[r.value, g.value, b.value]};
+						}
+						throw "hsl can only operate with numbers!";
+					}
+					case "type-torgb": {
+						let c = process(item.c, x, y);
+						if (c.type == "rgb") return c;
+						if (c.type == "hsl") {
+							return {type:"rgb", value:hsl2rgb(c.value)};
+						}
+						if (c.type == "number") {
+							return {type:"rgb", value:[c.value,c.value,c.value]};
+						}
+						throw "Invalid type passed into RGB converter!";
+					}
+					case "type-tohsl": {
+						let c = process(item.c, x, y);
+						if (c.type == "hsl") return c;
+						if (c.type == "rgb") {
+							return {type:"hsl", value:rgb2hsl(c.value)};
+						}
+						if (c.type == "number") {
+							return {type:"hsl", value:[c.value,1,0.5]};
+						}
+						throw "Invalid type passed into HSL converter!";
+					}
+					case "func-clamp01": {
+						let a = process(item.a, x, y);
+						if (a.type == "number") {
+							return {type:"number", value: clamp(a.value, 0, 1)};
+						} else if (a.type == "rgb") {
+							return {type:"rgb", value: [clamp(a.value[0], 0, 1), clamp(a.value[1], 0, 1), clamp(a.value[2], 0, 1)]};
+						} else if (a.type == "hsl") {
+							return {type:"hsl", value: [a.value[0] + 1 - Math.floor(a.value[0]), clamp(a.value[1], 0, 1), clamp(a.value[2], 0, 1)]};
+						}
+						throw "Invalid type passed into clamp01!";
+					}
+					case "func-lerp": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						let t = process(item.t, x, y);
+						if (t.type != "number") throw "t must be a number in lerp!";
+						if (a.type != b.type) throw "a and b types must match in lerp!";
+						if (a.type == "number") return {type:"number", value:lerp(a.value, b.value, t.value)};
+						else if (a.type == "rgb" || a.type == "hsl") return {type:a.type, value:lerpcol(a.value, b.value, t.value)};
+						else throw "Invalid type passed into lerp!";
+					}
+					case "func-invlerp": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						let t = process(item.t, x, y);
+						if (t.type != "number" || a.type != b.type || a.type != "number") throw "Invlerp only operates on numbers!";
+						return {type:"number", value:invlerp(a.value, b.value, t.value)};
+					}
+					case "func-lerpmap": {
+						let v = process(item.val, x, y);
+						let fa = process(item.fa, x, y);
+						let ta = process(item.ta, x, y);
+						let fb = process(item.fb, x, y);
+						let tb = process(item.tb, x, y);
+						if (v.type != "number" || fa.type != "number" || ta.type != "number" || fb.type != "number" || tb.type != "number") throw "Lerpmap only operates on numbers!";
+						return {type:"number", value:lerp(fb.value, tb.value, invlerp(fa.value, ta.value, v.value))};
+					}
+					case "func-clamprand": {
+						let b = process(item.b, x, y);
+						let d = process(item.d, x, y);
+						let k = process(item.k, x, y);
+						let v = process(item.v, x, y);
+						if (b.type != "number" || d.type != "number" || k.type != "number" || v.type != "number") throw "Clamped random variation only operates on numbers!";
+						return {type:"number", value:clampedrandvar(b.value,d.value,k.value,v.value)};
+					}
+					case "func-wraprand": {
+						let b = process(item.b, x, y);
+						let d = process(item.d, x, y);
+						let k = process(item.k, x, y);
+						let v = process(item.v, x, y);
+						if (b.type != "number" || d.type != "number" || k.type != "number" || v.type != "number") throw "Wrapped random variation only operates on numbers!";
+						return {type:"number", value:wrappedrandvar(b.value,d.value,k.value,v.value)};
+					}
+				}
+			}
+			
+			function getColor(item) {
+				if (item.type == "number") {
+					return tohex([item.value * 255, item.value * 255, item.value * 255]);
+				} else if (item.type == "hsl") {
+					return tohex(rgb(hsl2rgb(item.value)));
+				} else if (item.type == "rgb") {
+					return tohex(rgb(item.value));
+				} else if (item.type == "none") {
+					throw "No final value returned!";
+				}
+				throw "Invalid result type \"" + item.type + "\"!"
+			}
+
+			document.getElementById("generate").addEventListener("submit", (e) => {
+				e.preventDefault();
+				document.getElementById("error").innerHTML = "";
+				
+				try {
+					const w = canv.width = Number(document.getElementById("width").value);
+					const h = canv.height = Number(document.getElementById("height").value);
+					
+					for (let x = 0; x < w; x++) {
+						for (let y = 0; y < h; y++) {
+							ctx.fillStyle = getColor(process(datarep, x/w, y/h));
+							ctx.fillRect(x, y, 1, 1);
+						}
+					}
+				} catch (e) {
+					document.getElementById("error").innerText = e;
+					canv.width = 0;
+					canv.height = 0;
+					throw e;
+				}
+			});
+
+			document.getElementById("download").addEventListener("submit", (e) => {
+				e.preventDefault();
+				let a = document.createElement("a");
+				a.download = "download.png";
+				a.href = canv.toDataURL();
+				a.click();
+			});
+		</script>
+	</body>
+</html>
