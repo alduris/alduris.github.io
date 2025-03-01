@@ -41,6 +41,7 @@
 				cursor: pointer;
 				border: 1px solid currentColor;
 				position: relative;
+				color: black;
 			}
 			.container:empty::before {
 				content: "+";
@@ -86,6 +87,7 @@
 				cursor: pointer;
 				border: 1px solid black;
 				border-radius: 50%;
+				padding: revert;
 			}
 			
 			#floater[data-type='var']  p[data-type]:not([data-type='var']),  #floater > div:not(div:has(p[data-type]:not([data-type='var']))),
