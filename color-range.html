@@ -139,7 +139,12 @@
 		<p id="error"></p>
 		<p><canvas></canvas></p>
 		<form id="download">
-			<p><label>Name: <input type="text" id="name" value="palette" pattern="[\w\d\-]+" title="Alphanumeric characters, underscores, and hyphens only">.png</label> <input type="submit" value="Download Image"></p>
+			<p>
+				<label>Name: <input type="text" id="name" value="palette" pattern="[\w\d\-]+" title="Alphanumeric characters, underscores, and hyphens only">.png</label>
+				<input type="submit" value="Download Image">
+				|
+				<input type="submit" value="Copy to Clipboard">
+			</p>
 		</form>
 		<div id="floater">
 			<div>
@@ -1088,10 +1093,19 @@
 
 			document.getElementById("download").addEventListener("submit", (e) => {
 				e.preventDefault();
-				let a = document.createElement("a");
-				a.download = "download.png";
-				a.href = canv.toDataURL();
-				a.click();
+				let val = e.submitter.value;
+				if (val == "Download Image") {
+					let a = document.createElement("a");
+					a.download = "download.png";
+					a.href = canv.toDataURL();
+					a.click();
+				} else {
+					canv.toBlob(function(blob) { 
+						const item = new ClipboardItem({"image/png": blob});
+						navigator.clipboard.write([item]); 
+					});
+				}
+				return false;
 			});
 		</script>
 	</body>
