@@ -6,7 +6,7 @@
 		<title>Color Range Maker</title>
 		<link rel="stylesheet" type="text/css" href="main.css">
 		<style>
-			input[type=number] {
+			input[type=number], select {
 				width: 8ch;
 			}
 			#floater {
@@ -17,7 +17,7 @@
 				display: none;
 				padding: 4px;
 				gap: 2em;
-				grid-template-columns: auto auto;
+				grid-template-columns: auto auto auto;
 				user-select: none;
 			}
 			#floater.active {
@@ -63,6 +63,11 @@
 				align-items: center;
 				cursor: default;
 			}
+			.block[data-type='inp'] {
+				background-color: white;
+				padding: 2px 3px;
+				cursor: text;
+			}
 			.block[data-type='var'] {
 				background-color: #ff7f00;
 			}
@@ -75,13 +80,17 @@
 			.block[data-type='func'] {
 				background-color: #ff007f;
 			}
-			.block[data-type='inp'] {
-				background-color: white;
-				padding: 2px 3px;
-				cursor: text;
+			.block[data-type='cond'] {
+				background-color: #ffbf00;
 			}
-			.block[data-type='inp'] input[type='number'] {
+			.block[data-type='bool'] {
+				background-color: #00ff3f;
+			}
+			
+			.block input[type='number'], .block select {
 				background-color: white;
+				color: black;
+				border-color: black;
 			}
 			
 			.del {
@@ -93,11 +102,13 @@
 				padding: revert;
 			}
 			
-			#floater[data-type='var']  p[data-type]:not([data-type='var']),  #floater > div:not(div:has(p[data-type]:not([data-type='var']))),
-			#floater[data-type='op']   p[data-type]:not([data-type='op']),   #floater > div:not(div:has(p[data-type]:not([data-type='op']))),
-			#floater[data-type='type'] p[data-type]:not([data-type='type']), #floater > div:not(div:has(p[data-type]:not([data-type='type']))),
-			#floater[data-type='func'] p[data-type]:not([data-type='func']), #floater > div:not(div:has(p[data-type]:not([data-type='func']))),
-			#floater[data-type='inp']  p[data-type]:not([data-type='inp']),  #floater > div:not(div:has(p[data-type]:not([data-type='inp']))) {
+			#floater[data-type='var']  p[data-type]:not([data-type='var']),  #floater[data-type='var']  > div:not(div:has(p:not([data-type='var']))),
+			#floater[data-type='op']   p[data-type]:not([data-type='op']),   #floater[data-type='op']   > div:not(div:has(p:not([data-type='op']))),
+			#floater[data-type='type'] p[data-type]:not([data-type='type']), #floater[data-type='type'] > div:not(div:has(p:not([data-type='type']))),
+			#floater[data-type='func'] p[data-type]:not([data-type='func']), #floater[data-type='func'] > div:not(div:has(p:not([data-type='func']))),
+			#floater[data-type='cond'] p[data-type]:not([data-type='cond']), #floater[data-type='cond'] > div:not(div:has(p:not([data-type='cond']))),
+			#floater[data-type='bool'] p[data-type]:not([data-type='bool']), #floater[data-type='bool'] > div:not(div:has(p:not([data-type='bool']))),
+			#floater[data-type='inp']  p[data-type]:not([data-type='inp']),  #floater[data-type='inp']  > div:not(div:has(p:not([data-type='inp']))) {
 				display:none;
 			}
 			#floater[data-type='var'], #floater[data-type='op'], #floater[data-type='type'], #floater[data-type='func'], #floater[data-type='inp'] {
@@ -148,7 +159,11 @@
 					<span class="block" data-type="op" data-pick="op-times"><span class="container"></span> * <span class="container"></span></span><br>
 					<span class="block" data-type="op" data-pick="op-div"  ><span class="container"></span> / <span class="container"></span></span><br>
 					<span class="block" data-type="op" data-pick="op-mod"  ><span class="container"></span> % <span class="container"></span></span><br>
-					<span class="block" data-type="op" data-pick="op-pow"  ><span class="container"></span> ^ <span class="container"></span></span>
+					<span class="block" data-type="op" data-pick="op-pow"  ><span class="container"></span> ^ <span class="container"></span></span><br>
+					
+					<span class="block" data-type="op" data-pick="op-floor"><b>floor</b> <span class="container"></span></span><br>
+					<span class="block" data-type="op" data-pick="op-ceil" ><b>ceil</b> <span class="container"></span></span><br>
+					<span class="block" data-type="op" data-pick="op-round"><b>round</b> <span class="container"></span></span>
 				</p>
 			</div>
 			<div>
@@ -158,7 +173,9 @@
 					<span class="block" data-type="type" data-pick="type-hsl"><b>hsl</b> <span class="container"></span> <span class="container"></span> <span class="container"></span></span><br>
 					
 					<span class="block" data-type="type" data-pick="type-torgb"><b>to rgb</b> <span class="container"></span></span><br>
-					<span class="block" data-type="type" data-pick="type-tohsl"><b>to hsl</b> <span class="container"></span></span>
+					<span class="block" data-type="type" data-pick="type-tohsl"><b>to hsl</b> <span class="container"></span></span><br>
+					
+					<span class="block" data-type="type" data-pick="type-part"><b>get part</b> <select disabled><option>1</option><option>2</option><option>3</option></select> of <span class="container"></span></span>
 				</p>
 				<p data-type="func">
 					Functions:<br>
@@ -172,31 +189,49 @@
 					<span class="block" data-type="func" data-pick="func-wraprand"><b>wrapped random var</b> base: <span class="container"></span> dev: <span class="container"></span> k: <span class="container"></span> axis: <span class="container"></span></span><br>
 				</p>
 			</div>
+			<div>
+				<p data-type="cond">
+					Conditionals:<br>
+					<span class="block" data-type="cond" data-pick="cond-ifelse"><b>if</b> <span class="container"></span> <b>then:</b> <span class="container"></span> <b>else:</b> <span class="container"></span></span>
+				</p>
+				<p data-type="bool">
+					Logic:<br>
+					<span class="block" data-type="bool" data-pick="bool-eq"><span class="container"></span> = <span class="container"></span></span><br>
+					<span class="block" data-type="bool" data-pick="bool-gt"><span class="container"></span> &gt; <span class="container"></span></span><br>
+					<span class="block" data-type="bool" data-pick="bool-lt"><span class="container"></span> &lt; <span class="container"></span></span><br>
+					<span class="block" data-type="bool" data-pick="bool-ge"><span class="container"></span> &#8805; <span class="container"></span></span><br>
+					<span class="block" data-type="bool" data-pick="bool-le"><span class="container"></span> &#8804; <span class="container"></span></span><br>
+					
+					<span class="block" data-type="bool" data-pick="bool-and"><span class="container"></span> <b>and</b> <span class="container"></span></span><br>
+					<span class="block" data-type="bool" data-pick="bool-or"><span class="container"></span> <b>or</b> <span class="container"></span></span><br>
+					<span class="block" data-type="bool" data-pick="bool-not"><b>not</b> <span class="container"></span></span><br>
+				</p>
+			</div>
 		</div>
 		<script>
 			const canv = document.querySelector("canvas");
 			const ctx = canv.getContext("2d", {willReadFrequently: true});
-			const datarep = {type:"base", ret:"any", inner:null};
+			const datarep = {type:"base", inner:null};
 			var activeSlot = null;
 			
-			document.getElementById("leter").addEventListener("mouseleave", (e) => {
-				document.getElementById("leter").classList.remove("active");
-				document.getElementById("leter").removeAttribute("data-type");
+			document.getElementById("floater").addEventListener("mouseleave", (e) => {
+				document.getElementById("floater").classList.remove("active");
+				document.getElementById("floater").removeAttribute("data-type");
 			});
 			
 			function containerHandler(self, ref, set) {
 				if (self.children.length == 0) {
-					const leter = document.getElementById("leter");
-					leter.classList.remove("active");
-					leter.removeAttribute("data-type");
+					const floater = document.getElementById("floater");
+					floater.classList.remove("active");
+					floater.removeAttribute("data-type");
 					const forceType = self.getAttribute("data-force");
 					if (forceType != null) {
-						leter.setAttribute("data-type", forceType);
+						floater.setAttribute("data-type", forceType);
 					}
 					const b = self.getBoundingClientRect();
-					leter.style.top = Math.round(b.top + b.height) + "px";
-					leter.style.left = Math.round(b.left) + "px";
-					leter.classList.add("active");
+					floater.style.top = Math.round(b.top + b.height) + "px";
+					floater.style.left = Math.round(b.left) + "px";
+					floater.classList.add("active");
 					
 					activeSlot = [self, ref, set];
 				}
@@ -231,7 +266,7 @@
 				return el;
 			}
 			
-			for (const el of document.getElementById("leter").querySelectorAll(".block[data-type]")) {
+			for (const el of document.getElementById("floater").querySelectorAll(".block[data-type]")) {
 				el.addEventListener("click", (e) => {
 					if (activeSlot != null && activeSlot[0].children.length == 0) {
 						let result = null, block = null;
@@ -330,6 +365,33 @@
 								block.appendChild(document.createTextNode("^"));
 								block.appendChild(makeContainer(result, "b"));
 								break;
+							case "op-floor":
+								result = {a: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "op");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("floor"));
+								block.appendChild(makeContainer(result, "a"));
+								break;
+							case "op-ceil":
+								result = {a: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "op");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("ceil"));
+								block.appendChild(makeContainer(result, "a"));
+								break;
+							case "op-round":
+								result = {a: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "op");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("round"));
+								block.appendChild(makeContainer(result, "a"));
+								break;
 							case "type-rgb":
 								result = {r: null, g: null, b: null};
 								
@@ -370,6 +432,33 @@
 								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("to hsl"));
 								block.appendChild(makeContainer(result, "c"));
 								break;
+							case "type-part": {
+								result = {c: null, part: 1};
+								
+								let sel = document.createElement("select");
+								for (let i = 1; i <= 3; i++) {
+									let op = sel.appendChild(document.createElement("option"));
+									op.value = i;
+									op.innerText = i;
+								}
+								sel.addEventListener("change", (ev) => {
+									if (sel.value >= 1 && sel.value <= 3) {
+										result.part = Number(sel.value);
+									} else {
+										sel.selectedIndex = 0;
+									}
+								});
+								sel.selectedIndex = 0;
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "type");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("get part"));
+								block.appendChild(sel);
+								block.appendChild(document.createTextNode("of"));
+								block.appendChild(makeContainer(result, "c"));
+								break;
+							}
 							case "func-clamp01":
 								result = {a: null};
 								
@@ -457,6 +546,98 @@
 								block.appendChild(document.createTextNode("var:"));
 								block.appendChild(makeContainer(result, "v")).setAttribute("data-force", "var");
 								break;
+							case "cond-ifelse":
+								result = {cond: null, a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "cond");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("if"));
+								block.appendChild(makeContainer(result, "cond")).setAttribute("data-force", "bool");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("then:"));
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("else:"));
+								block.appendChild(makeContainer(result, "b"));
+								break;
+							case "bool-eq":
+								result = {a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "bool");
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createTextNode("="));
+								block.appendChild(makeContainer(result, "b"));
+								break;
+							case "bool-gt":
+								result = {a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "bool");
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createTextNode(">"));
+								block.appendChild(makeContainer(result, "b"));
+								break;
+							case "bool-lt":
+								result = {a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "bool");
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createTextNode("<"));
+								block.appendChild(makeContainer(result, "b"));
+								break;
+							case "bool-ge":
+								result = {a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "bool");
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createTextNode("\u2265"));
+								block.appendChild(makeContainer(result, "b"));
+								break;
+							case "bool-le":
+								result = {a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "bool");
+								block.appendChild(makeContainer(result, "a"));
+								block.appendChild(document.createTextNode("\u2264"));
+								block.appendChild(makeContainer(result, "b"));
+								break;
+							case "bool-and":
+								result = {a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "bool");
+								block.appendChild(makeContainer(result, "a")).setAttribute("data-force", "bool");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("and"));
+								block.appendChild(makeContainer(result, "b")).setAttribute("data-force", "bool");
+								break;
+							case "bool-or":
+								result = {a: null, b: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "bool");
+								block.appendChild(makeContainer(result, "a")).setAttribute("data-force", "bool");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("or"));
+								block.appendChild(makeContainer(result, "b")).setAttribute("data-force", "bool");
+								break;
+							case "bool-not":
+								result = {a: null};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "bool");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("not"));
+								block.appendChild(makeContainer(result, "a")).setAttribute("data-force", "bool");
+								break;
 						}
 						
 						if (result != null && block != null) {
@@ -468,8 +649,8 @@
 					}
 					
 					activeSlot = null;
-					document.getElementById("leter").classList.remove("active");
-					document.getElementById("leter").removeAttribute("data-type");
+					document.getElementById("floater").classList.remove("active");
+					document.getElementById("floater").removeAttribute("data-type");
 				});
 			}
 			
@@ -586,10 +767,13 @@
 				return "#" + r + g + b;
 			}
 			
+			const FALSE = {type:"bool", value:false};
+			const TRUE = {type:"bool", value:true};
 			function process(item, x, y) {
 				if (item == null) {
 					return {type:"none"};
 				}
+				
 				switch (item.type) {
 					case "base":
 						return process(item.inner, x, y);
@@ -678,6 +862,27 @@
 						}
 						throw "Pow only operates on numbers!";
 					}
+					case "op-floor": {
+						let a = process(item.a, x, y);
+						if (a.type == "number") {
+							return {type:"number", value: Math.floor(a.value)};
+						}
+						throw "Floor only operates on numbers!";
+					}
+					case "op-ceil": {
+						let a = process(item.a, x, y);
+						if (a.type == "number") {
+							return {type:"number", value: Math.ceil(a.value)};
+						}
+						throw "Ceiling only operates on numbers!";
+					}
+					case "op-round": {
+						let a = process(item.a, x, y);
+						if (a.type == "number") {
+							return {type:"number", value: Math.round(a.value)};
+						}
+						throw "Round only operates on numbers!";
+					}
 					case "type-rgb": {
 						let r = process(item.r, x, y);
 						let g = process(item.g, x, y);
@@ -718,6 +923,11 @@
 							return {type:"hsl", value:[c.value,1,0.5]};
 						}
 						throw "Invalid type passed into HSL converter!";
+					}
+					case "type-part": {
+						let c = process(item.c, x, y);
+						if (c.type == "hsl" || c.type == "rgb") return {type:"number", value:c.value[item.part - 1]};
+						throw "Cannot extract part from non-color!";
 					}
 					case "func-clamp01": {
 						let a = process(item.a, x, y);
@@ -778,11 +988,71 @@
 						if (b.type != "number" || d.type != "number" || k.type != "number" || v.type != "number") throw "Wrapped random variation only operates on numbers!";
 						return {type:"number", value:wrappedrandvar(b.value,d.value,k.value,v.value)};
 					}
+					case "cond-ifelse": {
+						let cond = process(item.cond, x, y);
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						if (cond.type != "bool") throw "Condition must be boolean!";
+						return cond.value ? a : b;
+					}
+					case "bool-eq": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						if (a.type != b.type) return FALSE;
+						else if (a.type == "number" || a.type == "bool") return a.value == b.value ? TRUE : FALSE;
+						else if (a.type == "rgb" || a.type == "hsl") return (a.value[0] == b.value[0] && a.value[1] == b.value[1] && a.value[2] == b.value[2]) ? TRUE : FALSE;
+						else throw "Invalid type passed into equals!";
+					}
+					case "bool-gt": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						if (a.type != b.type) throw "Mismatched types in greater-than!";
+						else if (a.type == "number" || a.type == "bool") return a.value > b.value ? TRUE : FALSE;
+						else throw "Greater-than only operates on numbers!";
+					}
+					case "bool-lt": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						if (a.type != b.type) throw "Mismatched types in less-than!";
+						else if (a.type == "number" || a.type == "bool") return a.value < b.value ? TRUE : FALSE;
+						else throw "Less-than only operates on numbers!";
+					}
+					case "bool-ge": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						if (a.type != b.type) throw "Mismatched types in greater-than-or-equal-to!";
+						else if (a.type == "number" || a.type == "bool") return a.value >= b.value ? TRUE : FALSE;
+						else throw "Greater-than-or-equal-to only operates on numbers!";
+					}
+					case "bool-le": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						if (a.type != b.type) throw "Mismatched types in less-than-or-equal-to!";
+						else if (a.type == "number" || a.type == "bool") return a.value <= b.value ? TRUE : FALSE;
+						else throw "Less-than-or-equal-to only operates on numbers!";
+					}
+					case "bool-and": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						if (a.type != b.type || a.type != "bool") throw "Logical AND only operates on booleans!";
+						return a.value && b.value ? TRUE : FALSE;
+					}
+					case "bool-or": {
+						let a = process(item.a, x, y);
+						let b = process(item.b, x, y);
+						if (a.type != b.type || a.type != "bool") throw "Logical OR only operates on booleans!";
+						return a.value || b.value ? TRUE : FALSE;
+					}
+					case "bool-not": {
+						let a = process(item.a, x, y);
+						if (a.type != "bool") throw "Logical NOT only operates on booleans!";
+						return a.value ? FALSE : TRUE;
+					}
 				}
 			}
 			
 			function getColor(item) {
-				if (item.type == "number") {
+				if (item.type == "number" || item.type == "bool") {
 					return tohex([item.value * 255, item.value * 255, item.value * 255]);
 				} else if (item.type == "hsl") {
 					return tohex(rgb(hsl2rgb(item.value)));
