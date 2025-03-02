@@ -22,6 +22,10 @@
 			}
 			#floater.active {
 				display: inline-grid;
+				box-sizing: border-box;
+				max-width: calc(100vw - 8px);
+				overflow-x: auto;
+				white-space: nowrap;
 			}
 			#floater .block {
 				cursor: pointer;
@@ -102,16 +106,16 @@
 				padding: revert;
 			}
 			
-			#floater[data-type='var']  p[data-type]:not([data-type='var']),  #floater[data-type='var']  > div:not(div:has(p:not([data-type='var']))),
-			#floater[data-type='op']   p[data-type]:not([data-type='op']),   #floater[data-type='op']   > div:not(div:has(p:not([data-type='op']))),
-			#floater[data-type='type'] p[data-type]:not([data-type='type']), #floater[data-type='type'] > div:not(div:has(p:not([data-type='type']))),
-			#floater[data-type='func'] p[data-type]:not([data-type='func']), #floater[data-type='func'] > div:not(div:has(p:not([data-type='func']))),
-			#floater[data-type='cond'] p[data-type]:not([data-type='cond']), #floater[data-type='cond'] > div:not(div:has(p:not([data-type='cond']))),
-			#floater[data-type='bool'] p[data-type]:not([data-type='bool']), #floater[data-type='bool'] > div:not(div:has(p:not([data-type='bool']))),
-			#floater[data-type='inp']  p[data-type]:not([data-type='inp']),  #floater[data-type='inp']  > div:not(div:has(p:not([data-type='inp']))) {
+			#floater[data-type='var']  p:not([data-type='var']),  #floater[data-type='var']  div:not(div:has(p:not([data-type='var']))),
+			#floater[data-type='op']   p:not([data-type='op']),   #floater[data-type='op']   div:not(div:has(p:not([data-type='op']))),
+			#floater[data-type='type'] p:not([data-type='type']), #floater[data-type='type'] div:not(div:has(p:not([data-type='type']))),
+			#floater[data-type='func'] p:not([data-type='func']), #floater[data-type='func'] div:not(div:has(p:not([data-type='func']))),
+			#floater[data-type='cond'] p:not([data-type='cond']), #floater[data-type='cond'] div:not(div:has(p:not([data-type='cond']))),
+			#floater[data-type='bool'] p:not([data-type='bool']), #floater[data-type='bool'] div:not(div:has(p:not([data-type='bool']))),
+			#floater[data-type='inp']  p:not([data-type='inp']),  #floater[data-type='inp']  div:not(div:has(p:not([data-type='inp']))) {
 				display:none;
 			}
-			#floater[data-type='var'], #floater[data-type='op'], #floater[data-type='type'], #floater[data-type='func'], #floater[data-type='inp'] {
+			#floater[data-type] {
 				grid-template-columns: auto;
 				gap: 0;
 			}
@@ -220,6 +224,7 @@
 			var activeSlot = null;
 			
 			document.getElementById("floater").addEventListener("mouseleave", (e) => {
+				activeSlot = null;
 				document.getElementById("floater").classList.remove("active");
 				document.getElementById("floater").removeAttribute("data-type");
 			});
@@ -233,17 +238,30 @@
 					if (forceType != null) {
 						floater.setAttribute("data-type", forceType);
 					}
-					const b = self.getBoundingClientRect();
-					floater.style.top = Math.round(b.top + b.height) + "px";
-					floater.style.left = Math.round(b.left) + "px";
 					floater.classList.add("active");
+					const b = self.getBoundingClientRect();
+					const l = window.innerWidth - floater.getBoundingClientRect().width - 4;
+					floater.style.top = Math.round(b.top + b.height + 2) + "px";
+					floater.style.left = Math.max(4, Math.min(l, Math.round(b.left))) + "px";
 					
 					activeSlot = [self, ref, set];
 				}
 			}
 			document.getElementById("base").addEventListener("click", (e) => {
 				e.preventDefault();
+				e.stopPropagation();
 				containerHandler(document.getElementById("base"), datarep, "inner");
+			});
+			document.body.addEventListener("click", (e) => {
+				const floater = document.getElementById("floater");
+				if (floater.classList.contains("active")) {
+					const bounds = floater.getBoundingClientRect();
+					if (e.clientX < bounds.left || e.clientX > bounds.right || e.clientY < bounds.top || e.clientY > bounds.bottom) {
+						activeSlot = null;
+						document.getElementById("floater").classList.remove("active");
+						document.getElementById("floater").removeAttribute("data-type");
+					}
+				}
 			});
 			
 			function makeContainer(ref, set) {
