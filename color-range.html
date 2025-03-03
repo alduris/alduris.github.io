@@ -1097,7 +1097,7 @@
 					
 					for (let x = 0; x < w; x++) {
 						for (let y = 0; y < h; y++) {
-							ctx.fillStyle = getColor(process(datarep, x/w, y/h));
+							ctx.fillStyle = getColor(process(datarep, x/(w-1), y/(h-1)));
 							ctx.fillRect(x, y, 1, 1);
 						}
 					}
