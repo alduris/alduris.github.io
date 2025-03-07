@@ -6,8 +6,14 @@
 		<title>Color Range Maker</title>
 		<link rel="stylesheet" type="text/css" href="main.css">
 		<style>
-			input[type=number], select {
+			input[type=number], select, .input, .select {
 				width: 8ch;
+			}
+			.input, .select {
+				border: 1px solid black;
+				border-radius: 4px;
+				padding: 3px;
+				background-color: white;
 			}
 			#floater {
 				border: 1px solid currentColor;
@@ -69,7 +75,7 @@
 			}
 			.block[data-type='inp'] {
 				background-color: white;
-				padding: 2px 3px;
+				padding: 2px 10px;
 				cursor: text;
 			}
 			.block[data-type='var'] {
@@ -154,7 +160,7 @@
 			<div>
 				<p data-type="inp">
 					Input:<br>
-					<span class="block" data-type="inp" data-pick="inp">input <input type="number" value="0.5" step="any" disabled></span>
+					<span class="block" data-type="inp" data-pick="inp"><span class="input">0.5</span></span>
 				</p>
 				<p data-type="var">
 					Variables:<br>
@@ -308,7 +314,7 @@
 								block = document.createElement("span");
 								block.classList.add("block");
 								block.setAttribute("data-type", "inp");
-								block.appendChild(document.createTextNode("input"));
+								//block.appendChild(document.createTextNode("input"));
 								block.appendChild(inp);
 								break;
 							}
