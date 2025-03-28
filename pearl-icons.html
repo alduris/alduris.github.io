@@ -16,9 +16,11 @@
 	</head>
 	<body>
 		<h1>Pearl Icon Maker</h1>
-		<p>For making pearl icons for the <a href="https://rainworldmods.miraheze.org/" target="_blank">Rain World Mods Wiki</a> or others. Enter a valid hex code, minus the #</p>
+		<p>For making pearl icons for the <a href="https://rainworldmods.miraheze.org/" target="_blank">Rain World Mods Wiki</a> or others.</p>
 		<hr>
-		<p><label>Hex code: <input id="input" type="text" pattern="[0-9a-fA-F]{3}|[0-9a-fA-F]{6}"></label></p>
+        <p><i>Enter hex codes without the leading #</i></p>
+		<p><label>Main body color: <input id="main" type="text" pattern="[0-9a-fA-F]{3}|[0-9a-fA-F]{6}"></label></p>
+		<p><label>Highlight color (optional): <input id="hilight" type="text" pattern="[0-9a-fA-F]{3}|[0-9a-fA-F]{6}"></label></p>
 		<p><canvas width="11" height="11"></canvas></p>
 		<form id="download">
 			<p>
@@ -90,9 +92,12 @@
 				[8, 4],
 			];
 			
-			document.getElementById("input").oninput = function() {
-				if(!this.checkValidity()) return;
-				let thing = "#" + this.value;
+			const main = document.getElementById("main");
+			const hili = document.getElementById("hilight");
+			main.oninput = hili.oninput = function() {
+				if(!main.checkValidity() || !hili.checkValidity()) return;
+				let thing = "#" + main.value;
+				let splot = "#" + hili.value;
 				
 				ctx.fillStyle = "#000000";
 				for(const p of edge) {
@@ -109,7 +114,6 @@
 					}
 				}
 				
-				//ctx.fillStyle = "#00003366";
 				const t = 0.3;
 				for(const p of shade) {
 					const d = ctx.getImageData(p[0], p[1], 1, 1);
@@ -119,6 +123,14 @@
 					}
 					ctx.putImageData(d, p[0], p[1]);
 					//ctx.fillRect(p[0], p[1], 1, 1);
+				}
+				
+				if (splot != "#") {
+					ctx.fillStyle = splot;
+					ctx.fillRect(2, 2, 2, 2);
+					ctx.fillStyle = splot + (splot.length == 4 ? "7" : "77");
+					ctx.fillRect(4, 2, 1, 3);
+					ctx.fillRect(2, 4, 2, 1);
 				}
 			}
 
