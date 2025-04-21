@@ -6,7 +6,7 @@
 		<title>Color Range Maker</title>
 		<link rel="stylesheet" type="text/css" href="main.css">
 		<style>
-			input[type=number], select, .input, .select {
+			input[type=number], .block select, .input, .select {
 				width: 8ch;
 			}
 			.input, .select {
@@ -140,8 +140,13 @@
 		<hr>
 		<h3>Input</h3>
 		<form id="generate">
-			<p><label>Width: <input type="number" min="1" max="4096" value="500" id="width"></label></p>
-			<p><label>Height: <input type="number" min="1" max="4096" value="500" id="height"></label></p>
+			<p><label>Width: <input type="number" min="1" max="4096" value="500" id="width" required></label></p>
+			<p><label>Height: <input type="number" min="1" max="4096" value="500" id="height" required></label></p>
+			<p><label>Mode: <select id="mode">
+				<option value="rect" selected>Rectangle</option>
+				<option value="vert">Triangle (vertex)</option>
+				<option value="edge">Triangle (edge)</option>
+			</select></label></p>
 			<p style="overflow-x: auto; white-space: nowrap;">Code: <span class="container" id="base"></span></p>
 			<p><input type="submit" value="Generate"></p>
 		</form>
@@ -154,18 +159,21 @@
 				<input type="submit" value="Download Image">
 				|
 				<input type="submit" value="Copy to Clipboard">
+				|
+				<input type="submit" value="Open in New Tab">
 			</p>
 		</form>
 		<div id="floater">
 			<div>
 				<p data-type="inp">
 					Input:<br>
-					<span class="block" data-type="inp" data-pick="inp"><span class="input">0.5</span></span>
+					<span class="block" data-type="inp" data-pick="inp"><span class="input">0.5</span></span><br>
 				</p>
 				<p data-type="var">
 					Variables:<br>
 					<span class="block" data-type="var" data-pick="var-x"><b>x</b></span><br>
-					<span class="block" data-type="var" data-pick="var-y"><b>y</b></span>
+					<span class="block" data-type="var" data-pick="var-y"><b>y</b></span><br>
+					<span class="block" data-type="var" data-pick="var-z"><b>z</b></span>
 				</p>
 				<p data-type="op">
 					Operations:<br>
@@ -178,7 +186,7 @@
 					
 					<span class="block" data-type="op" data-pick="op-floor"><b>floor</b> <span class="container"></span></span><br>
 					<span class="block" data-type="op" data-pick="op-ceil" ><b>ceil</b> <span class="container"></span></span><br>
-					<span class="block" data-type="op" data-pick="op-round"><b>round</b> <span class="container"></span></span>
+					<span class="block" data-type="op" data-pick="op-round"><b>round</b> <span class="container"></span></span><br>
 				</p>
 			</div>
 			<div>
@@ -186,11 +194,13 @@
 					Color Types:<br>
 					<span class="block" data-type="type" data-pick="type-rgb"><b>rgb</b> <span class="container"></span> <span class="container"></span> <span class="container"></span></span><br>
 					<span class="block" data-type="type" data-pick="type-hsl"><b>hsl</b> <span class="container"></span> <span class="container"></span> <span class="container"></span></span><br>
+					<span class="block" data-type="type" data-pick="type-rgb-inp"><b>rgb</b> <span class="input">0.5</span> <span class="input">0.5</span> <span class="input">0.5</span></span><br>
+					<span class="block" data-type="type" data-pick="type-hsl-inp"><b>hsl</b> <span class="input">0.5</span> <span class="input">0.5</span> <span class="input">0.5</span></span><br>
 					
 					<span class="block" data-type="type" data-pick="type-torgb"><b>to rgb</b> <span class="container"></span></span><br>
 					<span class="block" data-type="type" data-pick="type-tohsl"><b>to hsl</b> <span class="container"></span></span><br>
 					
-					<span class="block" data-type="type" data-pick="type-part"><b>get part</b> <select disabled><option>1</option><option>2</option><option>3</option></select> of <span class="container"></span></span>
+					<span class="block" data-type="type" data-pick="type-part"><b>get part</b> <select disabled><option>1</option><option>2</option><option>3</option></select> of <span class="container"></span></span><br>
 				</p>
 				<p data-type="func">
 					Functions:<br>
@@ -334,6 +344,14 @@
 								block.setAttribute("data-type", "var");
 								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("y"));
 								break;
+							case "var-z":
+								result = {};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "var");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("z"));
+								break;
 							case "op-plus":
 								result = {a: null, b: null};
 								
@@ -443,6 +461,68 @@
 								block.appendChild(makeContainer(result, "s"));
 								block.appendChild(makeContainer(result, "l"));
 								break;
+							case "type-rgb-inp": {
+								result = {r: 0.5, g: 0.5, b: 0.5};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "type");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("rgb"));
+								
+								let r = document.createElement("input");
+								let g = document.createElement("input");
+								let b = document.createElement("input");
+								r.type = g.type = b.type = "number";
+								r.step = g.step = b.step = "any";
+								r.min = g.min = b.min = 0;
+								r.max = g.max = b.max = 1;
+								r.value = g.value = b.value = 0.5;
+								r.addEventListener("change", (ev) => {
+									result.r = Number(r.value);
+								});
+								g.addEventListener("change", (ev) => {
+									result.g = Number(g.value);
+								});
+								b.addEventListener("change", (ev) => {
+									result.b = Number(b.value);
+								});
+								
+								block.appendChild(r);
+								block.appendChild(g);
+								block.appendChild(b);
+								break;
+							}
+							case "type-hsl-inp": {
+								result = {h: 0.5, s: 0.5, l: 0.5};
+								
+								block = document.createElement("span");
+								block.classList.add("block");
+								block.setAttribute("data-type", "type");
+								block.appendChild(document.createElement("b")).appendChild(document.createTextNode("hsl"));
+								
+								let h = document.createElement("input");
+								let s = document.createElement("input");
+								let l = document.createElement("input");
+								h.type = s.type = l.type = "number";
+								h.step = s.step = l.step = "any";
+								s.min = l.min = 0;
+								s.max = l.max = 1;
+								h.value = s.value = l.value = 0.5;
+								h.addEventListener("change", (ev) => {
+									result.h = Number(h.value);
+								});
+								s.addEventListener("change", (ev) => {
+									result.s = Number(s.value);
+								});
+								l.addEventListener("change", (ev) => {
+									result.l = Number(l.value);
+								});
+								
+								block.appendChild(h);
+								block.appendChild(s);
+								block.appendChild(l);
+								break;
+							}
 							case "type-torgb":
 								result = {c: null};
 								
@@ -798,14 +878,14 @@
 			
 			const FALSE = {type:"bool", value:false};
 			const TRUE = {type:"bool", value:true};
-			function process(item, x, y) {
+			function process(item, x, y, z) {
 				if (item == null) {
 					return {type:"none"};
 				}
 				
 				switch (item.type) {
 					case "base":
-						return process(item.inner, x, y);
+						return process(item.inner, x, y, z);
 					case "inp":
 						if (isNaN(item.value)) throw "Input was not a number!";
 						if (!isFinite(item.value)) throw "Input was not finite!";
@@ -814,9 +894,11 @@
 						return {type:"number", value:x};
 					case "var-y":
 						return {type:"number", value:y};
+					case "var-z":
+						return {type:"number", value:z};
 					case "op-plus": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (a.type != b.type) {
 							throw "Type mismatch in addition!";
 						} else if (a.type == "number") {
@@ -828,8 +910,8 @@
 						}
 					}
 					case "op-minus": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (a.type != b.type) {
 							throw "Type mismatch in subtraction!";
 						} else if (a.type == "number") {
@@ -841,8 +923,8 @@
 						}
 					}
 					case "op-times": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (a.type == "number" && (b.type == "rgb" || b.type == "hsl")) {
 							return {type:b.type, value:[b.value[0] * a.value, b.value[1] * a.value, b.value[2] * a.value]};
 						} else if (b.type == "number" && (a.type == "rgb" || a.type == "hsl")) {
@@ -858,8 +940,8 @@
 						}
 					}
 					case "op-div": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (a.type == "number" && (b.type == "rgb" || b.type == "hsl")) {
 							return {type:b.type, value:[b.value[0] / a.value, b.value[1] / a.value, b.value[2] / a.value]};
 						} else if (b.type == "number" && (a.type == "rgb" || a.type == "hsl")) {
@@ -875,8 +957,8 @@
 						}
 					}
 					case "op-mod": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						
 						if (a.type == "number" && b.type == "number") {
 							return {type:"number", value:a.value%b.value};
@@ -884,38 +966,38 @@
 						throw "Modulo only operates on numbers!";
 					}
 					case "op-pow": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (a.type == "number" && b.type == "number") {
 							return {type:"number", value: Math.pow(a.value, b.value)};
 						}
 						throw "Pow only operates on numbers!";
 					}
 					case "op-floor": {
-						let a = process(item.a, x, y);
+						let a = process(item.a, x, y, z);
 						if (a.type == "number") {
 							return {type:"number", value: Math.floor(a.value)};
 						}
 						throw "Floor only operates on numbers!";
 					}
 					case "op-ceil": {
-						let a = process(item.a, x, y);
+						let a = process(item.a, x, y, z);
 						if (a.type == "number") {
 							return {type:"number", value: Math.ceil(a.value)};
 						}
 						throw "Ceiling only operates on numbers!";
 					}
 					case "op-round": {
-						let a = process(item.a, x, y);
+						let a = process(item.a, x, y, z);
 						if (a.type == "number") {
 							return {type:"number", value: Math.round(a.value)};
 						}
 						throw "Round only operates on numbers!";
 					}
 					case "type-rgb": {
-						let r = process(item.r, x, y);
-						let g = process(item.g, x, y);
-						let b = process(item.b, x, y);
+						let r = process(item.r, x, y, z);
+						let g = process(item.g, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (r.type == "number" && g.type == "number" && b.type == "number") {
 							return {type:"rgb", value:clampcol([r.value, g.value, b.value], 0, 1)};
 						}
@@ -923,16 +1005,32 @@
 					}
 					case "type-hsl": {
 						// shhh I was too lazy to change the variable names
-						let r = process(item.h, x, y);
-						let g = process(item.s, x, y);
-						let b = process(item.l, x, y);
+						let r = process(item.h, x, y, z);
+						let g = process(item.s, x, y, z);
+						let b = process(item.l, x, y, z);
 						if (r.type == "number" && g.type == "number" && b.type == "number") {
 							return {type:"hsl", value:clampcol([r.value, g.value, b.value], 0, 1)};
 						}
 						throw "hsl can only operate with numbers!";
 					}
+					case "type-rgb-inp": {
+						let r = item.r;
+						let g = item.g;
+						let b = item.b;
+						if (isNaN(r) || isNaN(g) || isNaN(b)) throw "Input was not a number!";
+						if (!isFinite(r) || !isFinite(g) || !isFinite(b)) throw "Input was not finite!";
+						return {type:"rgb", value:clampcol([r, g, b], 0, 1)};
+					}
+					case "type-hsl-inp": {
+						let h = item.h;
+						let s = item.s;
+						let l = item.l;
+						if (isNaN(h) || isNaN(s) || isNaN(l)) throw "Input was not a number!";
+						if (!isFinite(h) || !isFinite(s) || !isFinite(l)) throw "Input was not finite!";
+						return {type:"hsl", value:clampcol([h, s, l], 0, 1)};
+					}
 					case "type-torgb": {
-						let c = process(item.c, x, y);
+						let c = process(item.c, x, y, z);
 						if (c.type == "rgb") return c;
 						if (c.type == "hsl") {
 							return {type:"rgb", value:hsl2rgb(c.value)};
@@ -943,7 +1041,7 @@
 						throw "Invalid type passed into RGB converter!";
 					}
 					case "type-tohsl": {
-						let c = process(item.c, x, y);
+						let c = process(item.c, x, y, z);
 						if (c.type == "hsl") return c;
 						if (c.type == "rgb") {
 							return {type:"hsl", value:rgb2hsl(c.value)};
@@ -954,12 +1052,12 @@
 						throw "Invalid type passed into HSL converter!";
 					}
 					case "type-part": {
-						let c = process(item.c, x, y);
+						let c = process(item.c, x, y, z);
 						if (c.type == "hsl" || c.type == "rgb") return {type:"number", value:c.value[item.part - 1]};
 						throw "Cannot extract part from non-color!";
 					}
 					case "func-clamp01": {
-						let a = process(item.a, x, y);
+						let a = process(item.a, x, y, z);
 						if (a.type == "number") {
 							return {type:"number", value: clamp(a.value, 0, 1)};
 						} else if (a.type == "rgb") {
@@ -970,9 +1068,9 @@
 						throw "Invalid type passed into clamp01!";
 					}
 					case "func-lerp": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
-						let t = process(item.t, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
+						let t = process(item.t, x, y, z);
 						if (t.type != "number") throw "t must be a number in lerp!";
 						if (a.type != b.type) throw "a and b types must match in lerp!";
 						if (a.type == "number") return {type:"number", value:lerp(a.value, b.value, t.value)};
@@ -986,94 +1084,94 @@
 						else throw "Invalid type passed into lerp!";
 					}
 					case "func-invlerp": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
-						let t = process(item.t, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
+						let t = process(item.t, x, y, z);
 						if (t.type != "number" || a.type != b.type || a.type != "number") throw "Invlerp only operates on numbers!";
 						return {type:"number", value:invlerp(a.value, b.value, t.value)};
 					}
 					case "func-lerpmap": {
-						let v = process(item.val, x, y);
-						let fa = process(item.fa, x, y);
-						let ta = process(item.ta, x, y);
-						let fb = process(item.fb, x, y);
-						let tb = process(item.tb, x, y);
+						let v = process(item.val, x, y, z);
+						let fa = process(item.fa, x, y, z);
+						let ta = process(item.ta, x, y, z);
+						let fb = process(item.fb, x, y, z);
+						let tb = process(item.tb, x, y, z);
 						if (v.type != "number" || fa.type != "number" || ta.type != "number" || fb.type != "number" || tb.type != "number") throw "Lerpmap only operates on numbers!";
 						return {type:"number", value:lerp(fb.value, tb.value, invlerp(fa.value, ta.value, v.value))};
 					}
 					case "func-clamprand": {
-						let b = process(item.b, x, y);
-						let d = process(item.d, x, y);
-						let k = process(item.k, x, y);
-						let v = process(item.v, x, y);
+						let b = process(item.b, x, y, z);
+						let d = process(item.d, x, y, z);
+						let k = process(item.k, x, y, z);
+						let v = process(item.v, x, y, z);
 						if (b.type != "number" || d.type != "number" || k.type != "number" || v.type != "number") throw "Clamped random variation only operates on numbers!";
 						return {type:"number", value:clampedrandvar(b.value,d.value,k.value,v.value)};
 					}
 					case "func-wraprand": {
-						let b = process(item.b, x, y);
-						let d = process(item.d, x, y);
-						let k = process(item.k, x, y);
-						let v = process(item.v, x, y);
+						let b = process(item.b, x, y, z);
+						let d = process(item.d, x, y, z);
+						let k = process(item.k, x, y, z);
+						let v = process(item.v, x, y, z);
 						if (b.type != "number" || d.type != "number" || k.type != "number" || v.type != "number") throw "Wrapped random variation only operates on numbers!";
 						return {type:"number", value:wrappedrandvar(b.value,d.value,k.value,v.value)};
 					}
 					case "cond-ifelse": {
-						let cond = process(item.cond, x, y);
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let cond = process(item.cond, x, y, z);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (cond.type != "bool") throw "Condition must be boolean!";
 						return cond.value ? a : b;
 					}
 					case "bool-eq": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (a.type != b.type) return FALSE;
 						else if (a.type == "number" || a.type == "bool") return a.value == b.value ? TRUE : FALSE;
 						else if (a.type == "rgb" || a.type == "hsl") return (a.value[0] == b.value[0] && a.value[1] == b.value[1] && a.value[2] == b.value[2]) ? TRUE : FALSE;
 						else throw "Invalid type passed into equals!";
 					}
 					case "bool-gt": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (a.type != b.type) throw "Mismatched types in greater-than!";
 						else if (a.type == "number" || a.type == "bool") return a.value > b.value ? TRUE : FALSE;
 						else throw "Greater-than only operates on numbers!";
 					}
 					case "bool-lt": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (a.type != b.type) throw "Mismatched types in less-than!";
 						else if (a.type == "number" || a.type == "bool") return a.value < b.value ? TRUE : FALSE;
 						else throw "Less-than only operates on numbers!";
 					}
 					case "bool-ge": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (a.type != b.type) throw "Mismatched types in greater-than-or-equal-to!";
 						else if (a.type == "number" || a.type == "bool") return a.value >= b.value ? TRUE : FALSE;
 						else throw "Greater-than-or-equal-to only operates on numbers!";
 					}
 					case "bool-le": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (a.type != b.type) throw "Mismatched types in less-than-or-equal-to!";
 						else if (a.type == "number" || a.type == "bool") return a.value <= b.value ? TRUE : FALSE;
 						else throw "Less-than-or-equal-to only operates on numbers!";
 					}
 					case "bool-and": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (a.type != b.type || a.type != "bool") throw "Logical AND only operates on booleans!";
 						return a.value && b.value ? TRUE : FALSE;
 					}
 					case "bool-or": {
-						let a = process(item.a, x, y);
-						let b = process(item.b, x, y);
+						let a = process(item.a, x, y, z);
+						let b = process(item.b, x, y, z);
 						if (a.type != b.type || a.type != "bool") throw "Logical OR only operates on booleans!";
 						return a.value || b.value ? TRUE : FALSE;
 					}
 					case "bool-not": {
-						let a = process(item.a, x, y);
+						let a = process(item.a, x, y, z);
 						if (a.type != "bool") throw "Logical NOT only operates on booleans!";
 						return a.value ? FALSE : TRUE;
 					}
@@ -1093,18 +1191,56 @@
 				throw "Invalid result type \"" + item.type + "\"!"
 			}
 
+			function dist(x, y) {
+				return Math.sqrt(x**2 + y**2);
+			}
+			function angle(x1, y1, x2, y2, x3, y3) {
+				let a1 = x1-x2, b1 = x3-x2, a2 = y1-y2, b2 = y3-y2;
+				return Math.acos((a1*b1 + a2*b2) / (dist(a1, a2) * dist(b1, b2)));
+			}
+
 			document.getElementById("generate").addEventListener("submit", (e) => {
 				e.preventDefault();
 				document.getElementById("error").innerHTML = "";
 				
 				try {
-					const w = canv.width = Number(document.getElementById("width").value);
-					const h = canv.height = Number(document.getElementById("height").value);
+					const mode = document.getElementById("mode").value;
+					const w = (canv.width = Number(document.getElementById("width").value)) - 1;
+					const h = (canv.height = Number(document.getElementById("height").value)) - 1;
+					const m = Math.abs(h * w + (w/2) * h - h * (w/2)) / Math.sqrt(h ** 2 + (w/2) ** 2);
 					
 					for (let x = 0; x < w; x++) {
 						for (let y = 0; y < h; y++) {
-							ctx.fillStyle = getColor(process(datarep, x/(w-1), y/(h-1)));
-							ctx.fillRect(x, y, 1, 1);
+							switch (mode) {
+								case "rect": {
+									ctx.fillStyle = getColor(process(datarep, x/w, y/h, 0));
+									ctx.fillRect(x, y, 1, 1);
+									break;
+								}
+								case "vert": {
+									const a = -((h * x - (w/2) * y - h * (w/2)) / Math.sqrt(h ** 2 + (w/2) ** 2)) / m;
+									const b = 1 - y / h;
+									const c = ((h * x + (w/2) * y - h * (w/2)) / Math.sqrt(h ** 2 + (w/2) ** 2)) / m;
+									if (a < 0 || b < 0 || c < 0 || a > 1 || b > 1 || c > 1) ctx.fillStyle = "#00000000";
+									else ctx.fillStyle = getColor(process(datarep, a, b, c));
+									ctx.fillRect(x, y, 1, 1);
+									break;
+								}
+								case "edge": {
+									const a = -((h * x - (w/2) * y - h * (w/2)) / Math.sqrt(h ** 2 + (w/2) ** 2)) / m;
+									const b = 1 - y / h;
+									const c = ((h * x + (w/2) * y - h * (w/2)) / Math.sqrt(h ** 2 + (w/2) ** 2)) / m;
+									if (a < 0 || b < 0 || c < 0 || a > 1 || b > 1 || c > 1) ctx.fillStyle = "#00000000";
+									else {
+										const d = 1 - angle(0, h, w, h, x, y) / angle(0, h, w, h, w/2, 0);
+										const e = angle(0, h, w/2, 0, x, y) / angle(0, h, w/2, 0, w, h);
+										const f = angle(w, h, 0, h, x, y) / angle(w, h, 0, h, w/2, 0);
+										ctx.fillStyle = getColor(process(datarep, d, e, f));
+									}
+									ctx.fillRect(x, y, 1, 1);
+									break;
+								}
+							}
 						}
 					}
 				} catch (e) {
@@ -1117,17 +1253,23 @@
 
 			document.getElementById("download").addEventListener("submit", (e) => {
 				e.preventDefault();
-				let val = e.submitter.value;
+				const val = e.submitter.value;
 				if (val == "Download Image") {
-					let a = document.createElement("a");
-					a.download = "download.png";
+					const a = document.createElement("a");
+					const nm = document.getElementById("name");
+					a.download = nm.checkValidity() ? nm.value + ".png" : "download.png";
 					a.href = canv.toDataURL();
 					a.click();
-				} else {
+				} else if (val == "Copy to Clipboard") {
 					canv.toBlob(function(blob) { 
 						const item = new ClipboardItem({"image/png": blob});
 						navigator.clipboard.write([item]); 
 					});
+				} else {
+					const tab = window.open("", "_blank");
+					tab.document.head.appendChild(document.createElement("style")).innerText = "img {image-rendering: pixelated;}";
+					tab.document.body.appendChild(document.createElement("img")).src = canv.toDataURL();
+					tab.focus();
 				}
 				return false;
 			});
