@@ -1063,7 +1063,7 @@
 						} else if (a.type == "rgb") {
 							return {type:"rgb", value: [clamp(a.value[0], 0, 1), clamp(a.value[1], 0, 1), clamp(a.value[2], 0, 1)]};
 						} else if (a.type == "hsl") {
-							return {type:"hsl", value: [a.value[0] + 1 - Math.floor(a.value[0]), clamp(a.value[1], 0, 1), clamp(a.value[2], 0, 1)]};
+							return {type:"hsl", value: [a.value[0] - Math.floor(a.value[0]), clamp(a.value[1], 0, 1), clamp(a.value[2], 0, 1)]};
 						}
 						throw "Invalid type passed into clamp01!";
 					}
@@ -1078,7 +1078,7 @@
 							return {type:a.type, value:lerpcol(a.value, b.value, t.value)};
 						} else if (a.type == "hsl") {
 							let val = {type:a.type, value:lerpcol(a.value, b.value, t.value)};
-							val = clamp(val - Math.floor(val), 0, 1);
+							val.value[0] = clamp(val.value[0] - Math.floor(val.value[0]), 0, 1);
 							return val;
 						}
 						else throw "Invalid type passed into lerp!";
