@@ -146,6 +146,7 @@
 				<option value="rect" selected>Rectangle</option>
 				<option value="vert">Triangle (vertex)</option>
 				<option value="edge">Triangle (edge)</option>
+				<option value="tri2">Triangle (2-axis)</option>
 			</select></label></p>
 			<p style="overflow-x: auto; white-space: nowrap;">Code: <span class="container" id="base"></span></p>
 			<p><input type="submit" value="Generate"></p>
@@ -1236,6 +1237,17 @@
 										const e = angle(0, h, w/2, 0, x, y) / angle(0, h, w/2, 0, w, h);
 										const f = angle(w, h, 0, h, x, y) / angle(w, h, 0, h, w/2, 0);
 										ctx.fillStyle = getColor(process(datarep, d, e, f));
+									}
+									ctx.fillRect(x, y, 1, 1);
+									break;
+								}
+								case "tri2": {
+									const a = -((h * x - (w/2) * y - h * (w/2)) / Math.sqrt(h ** 2 + (w/2) ** 2)) / m;
+									const b = 1 - y / h;
+									const c = ((h * x + (w/2) * y - h * (w/2)) / Math.sqrt(h ** 2 + (w/2) ** 2)) / m;
+									if (a < 0 || b < 0 || c < 0 || a > 1 || b > 1 || c > 1) ctx.fillStyle = "#00000000";
+									else {
+										ctx.fillStyle = getColor(process(datarep, angle(0, h, w/2, 0, x, y) / angle(0, h, w/2, 0, w, h), y/h, 0));
 									}
 									ctx.fillRect(x, y, 1, 1);
 									break;
